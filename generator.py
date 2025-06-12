@@ -2,8 +2,7 @@ import re
 import argparse
 import random
 from docx import Document
-
-doc = Document("Bingo Template.docx")
+from docx.shared import Pt
 
 def SampleInputTxt(inputFile):
   with open(inputFile, 'r', encoding = "utf-8") as file:
@@ -37,29 +36,34 @@ def ReplaceInString(string, replacementMap):
   return regexPattern.sub(replacer, string)
 
 
-def ReplaceTableFields(replacementMap):
+def ReplaceTableFields(doc, replacementMap):
   for table in doc.tables:
     for row in table.rows:
       for cell in row.cells:
         for para in cell.paragraphs:
             newText = ReplaceInString(para.text, replacementMap)
             para.clear()
-            para.add_run(newText)
-  
+            run = para.add_run(newText)
+            run.font.name = "Comic Sans MS"
   return doc
 
-if __name__ == "__main__":
+def HandleArgs():
   parser = argparse.ArgumentParser(description= "Let's play bingo.")
   parser.add_argument("-i", required = True,  help = "A text file where each bingo option is on a separate line.")
   parser.add_argument("-o", required = True,  help ="The title of the bingo cards")
   parser.add_argument("-n", default = 1, type = int, required = False, help = "The amount of bingo cards to generate.")
 
   args = parser.parse_args()
+  return args
+
+if __name__ == "__main__":
+  args = HandleArgs()
   nrOfCards = int(args.n)
 
   for i in range(nrOfCards):
+      doc = Document("Bingo Template.docx")
       sampledLines = SampleInputTxt(args.i)
       fieldMap = CreateFieldMap(args.o, sampledLines)
-      newDoc = ReplaceTableFields(fieldMap)
-      outputFileName = str(args.o) + "_" + str(i) + ".docx"
+      newDoc = ReplaceTableFields(doc, fieldMap)
+      outputFileName = str(args.o) + "_BINGO_" + str(i + 1) + ".docx"
       newDoc.save(outputFileName)
